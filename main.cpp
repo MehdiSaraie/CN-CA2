@@ -29,6 +29,7 @@ struct Switch
 int main()
 {
 	int program_id = getpid();
+	cout << program_id << endl;
 	vector<struct System> systems;
 	vector<struct Switch> switches;
 	string command;
@@ -38,36 +39,79 @@ int main()
 		if (getpid() == program_id)
 		{
 			cin >> command;
+
 			if (command == "MySwitch")
 			{
 				int switch_number, number_of_ports;
-				cin >> switch_number;
 				cin >> number_of_ports;
-				pid = fork();
-				if (pid > 0) //main process
+				cin >> switch_number;
+				bool switch_exists = false;
+				for(int i=0;i<switches.size();i++)
 				{
+					if(switches[i].number == switch_number)
+					{
+						switch_exists = true;
+						break;
+					}
+				}
+				if(!switch_exists)
+				{
+					cout << "Switch " << switch_number << " created\n";
+					pid = fork();
 					struct Switch new_switch;
 					new_switch.pid = pid;
 					new_switch.number_of_ports = number_of_ports;
 					new_switch.number = switch_number;
-					for(int i=0; i<number_of_ports; i++)
-						new_switch.pipe.push_back(vector<int>(2));
+					if (pid > 0) //main process
+					{
+						//
+						
+					}
+					else if (pid == 0){
+						systems.clear();
+						switches.clear();
+					}
 					switches.push_back(new_switch);
 				}
+				else
+					cout << "Switch " << switch_number << " already exists\n";
 			}
+
 			else if (command == "MySystem")
 			{
 				int system_number;
 				cin >> system_number;
-				pid = fork();
-				if (pid > 0) //main process
+				bool system_exists = false;
+				for(int i=0;i<systems.size();i++)
 				{
+					if(systems[i].number == system_number)
+					{
+						system_exists = true;
+						break;
+					}
+				}
+				if(!system_exists)
+				{
+					cout << "System " << system_number << " created\n";
+					pid = fork();
 					struct System new_system;
 					new_system.pid = pid;
 					new_system.number = system_number;
+					if (pid > 0) //main process
+					{
+						//
+						
+					}
+					else if (pid == 0){
+						systems.clear();
+						switches.clear();
+					}
 					systems.push_back(new_system);
 				}
+				else
+					cout << "System " << system_number << " already exists\n";
 			}
+
 			else if(command == "Connect")
 			{	
 				int system_number, switch_number, port_number;
@@ -94,21 +138,21 @@ int main()
 			}
 		}
 		else{
-			for (int i=0; i<systems.size();i++){
-				cout << "hello\n";
-				if(getpid() == systems[i].pid){
-					write(systems[i].pipe[1], &("HELLP MY SWITCH")[0], LENGTH);
-				}
+			char inbuf1[LENGTH];
+			
+			if(systems.size() == 1){
+				cout << "hello1\n";
+				write(systems[0].pipe[1], &("HELLP MY SWITCH")[0], LENGTH);	
 				
 			}
-			for(int i=0; i<switches.size(); i++){
-				char inbuf1[LENGTH];
-				if(getpid() == switches[i].pid){
-					read(switches[i].pipe[0][0], inbuf1, LENGTH);
-					cout << inbuf1 << "  fsedf" << endl;
-				}
+				
+			else if(switches.size() == 1){
+				cout << "hello2\n";
+				read(switches[0].pipe[0][0], inbuf1, LENGTH);
+				cout << inbuf1 << "  fsedf" << endl;
 			}
 		}
+		//cout << getpid() << endl;
 	}
 
 	/*int id = fork();
