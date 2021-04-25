@@ -10,69 +10,128 @@
 
 using namespace std;
 #define LENGTH 1024
+
 struct System
 {
-	int pid;
 	int number;
-	vector<int> pipe;
+	int main_pipe_write_end; //to send msg from main to proc
 };
 
 struct Switch
 {
-	int pid;
-	int number_of_ports;
 	int number;
-	int lookup_table[1024][2];
-	vector<vector<int>> pipe;
+	int main_pipe_write_end; //to recv msg from main proc
 };
 
 int main()
 {
-	vector<struct System> systems;
-	vector<struct Switch> switches;
-	string command;
+	vector<Switch> switches;
+	vector<System> systems;
 	while(true){
-	    cin >> command;
+	    string input_str;
+		getline(cin,input_str);
+		char* input = &input_str[0];
+		istringstream line(input);
+		string command;
+		int token;
+		vector<int> tokens;
+		line >> command;
+		while(line >> token)
+			tokens.push_back(token);
+
 		if (command == "MySwitch"){
-        	int p[2];
-            pipe(p);
-			int switch_number, number_of_ports;
-			cin >> number_of_ports;
-			cin >> switch_number;
+			if (tokens.size() != 2){
+				cout << "incomplete arguments\n";
+				continue;
+			}
+			int number_of_ports = tokens[0], switch_number = tokens[1];
+			int switch_exists = false;
+			for(int i=0;i<switches.size();i++)
+			{
+				if(switches[i].number == switch_number)
+				{
+					switch_exists = true;
+					break;
+				}
+			}
+			if(switch_exists){
+				cout << "Switch " << switch_number << " already exists\n";
+				continue;
+			}
+			cout << "Switch " << switch_number << " created\n";
+
+			struct Switch new_switch;
+			new_switch.number = switch_number;
+			int main_pipe[2];
+			pipe(main_pipe);
+			new_switch.main_pipe_write_end = main_pipe[1];
+			switches.push_back(new_switch);
+
+			int temp_pipe[2];
+			pipe(temp_pipe);
+
             char inbuf1[LENGTH], inbuf2[LENGTH];
 			int n1 = fork();
             
             if (n1>0){ //parent
-                write(p[1], &(to_string(switch_number))[0], LENGTH);
-                write(p[1], &(to_string(number_of_ports))[0], LENGTH);
+                write(temp_pipe[1], &(to_string(switch_number))[0], LENGTH);
+                write(temp_pipe[1], &(to_string(number_of_ports))[0], LENGTH);
             }
 
             if (n1 == 0){ //child
-                read(p[0], inbuf1, LENGTH);
-                read(p[0], inbuf2, LENGTH);
+                read(temp_pipe[0], inbuf1, LENGTH);
+                read(temp_pipe[0], inbuf2, LENGTH);
+				puts(inbuf1);
                 char* args[]={"./switch.out", NULL}; 
                 string named_pipe = "aliii";
-                execlp(args[0],&inbuf1[0], &inbuf2[0], &named_pipe[0]); 
+                execlp(args[0],&inbuf1[0], &inbuf2[0], &named_pipe[0], &(to_string(main_pipe[0]))[0]); 
                 exit(0);
             }
         }
         if (command == "MySystem"){
-        	int p[2];
-            pipe(p);
-			int system_number;
-			cin >> system_number;
+			if (tokens.size() != 1){
+				cout << "incomplete arguments\n";
+				continue;
+			}
+			int system_number = tokens[0];
+			int system_exists = false;
+			for(int i=0;i<systems.size();i++)
+			{
+				if(systems[i].number == system_number)
+				{
+					system_exists = true;
+					break;
+				}
+			}
+			if(system_exists){
+				cout << "System " << system_number << " already exists\n";
+				continue;
+			}
+			cout << "System " << system_number << " created\n";
+
+			struct System new_system;
+			new_system.number = system_number;
+			int main_pipe[2];
+            pipe(main_pipe);
+			new_system.main_pipe_write_end = main_pipe[1];
+			systems.push_back(new_system);
+
+			int temp_pipe[2];
+			pipe(temp_pipe);
+			
             char inbuf1[LENGTH], inbuf2[LENGTH];
 			int n1 = fork();
             
             if (n1>0){ //parent
-                write(p[1], &(to_string(system_number))[0], LENGTH);
+                write(temp_pipe[1], &(to_string(system_number))[0], LENGTH);
             }
 
             if (n1 == 0){ //child
-                read(p[0], inbuf1, LENGTH);
+                read(temp_pipe[0], inbuf1, LENGTH);
+				puts(inbuf1);
                 char* args[]={"./system.out", NULL}; 
                 string named_pipe = "aliii";
-                execlp(args[0],&inbuf1[0], &named_pipe[0] ); 
+                execlp(args[0],&inbuf1[0], &named_pipe[0], &(to_string(main_pipe[0]))[0]); 
                 exit(0);
             }
         }
