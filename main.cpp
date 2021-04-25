@@ -142,7 +142,7 @@ int main()
 			
 			if(systems.size() == 1){
 				cout << "hello1\n";
-				write(systems[0].pipe[1], &("HELLP MY SWITCH")[0], LENGTH);	
+				write(systems[0].pipe[1], "HELLO MY SWITCH", LENGTH);	
 				
 			}
 				
