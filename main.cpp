@@ -81,7 +81,7 @@ int main()
             if (n1 == 0){ //child
                 read(temp_pipe[0], inbuf1, LENGTH);
                 read(temp_pipe[0], inbuf2, LENGTH);
-				puts(inbuf1);
+				// puts(inbuf1);
                 char* args[]={"./switch.out", NULL}; 
                 execlp(args[0],&inbuf1[0], &inbuf2[0], &(to_string(main_pipe[0]))[0]); 
                 exit(0);
@@ -127,7 +127,7 @@ int main()
 
             if (n1 == 0){ //child
                 read(temp_pipe[0], inbuf1, LENGTH);
-				puts(inbuf1);
+				// puts(inbuf1);
                 char* args[]={"./system.out", NULL}; 
                 execlp(args[0],&inbuf1[0], &(to_string(main_pipe[0]))[0]); 
                 exit(0);
@@ -135,8 +135,9 @@ int main()
         }
 		else if(command == "Connect")
 		{	
-			int system_number, switch_number, port_number;
-			line >> system_number >> switch_number >> port_number;
+			// int system_number, switch_number, port_number;
+			// line >> system_number >> switch_number >> port_number;
+			int system_number = tokens[0] , switch_number = tokens[1], port_number = tokens[2];
 			int i, j;
 			bool switch_exists = false, system_exists = false;
 			for(i=0; i<switches.size(); i++){
@@ -153,17 +154,43 @@ int main()
 			}
 			if (switch_exists && system_exists)
 			{
-				cout << "System " << system_number << "connected to switch " << switch_number << "on port " << port_number << endl;
-				write(switches[i].main_pipe_write_end, input, strlen(input)); //send input to switch
-				write(systems[j].main_pipe_write_end, input, strlen(input)); //send input to system
+				cout << "System " << system_number << " connected to switch " << switch_number << " on port " << port_number << endl;
+				write(switches[i].main_pipe_write_end, input, LENGTH); //send input to switch
+				write(systems[j].main_pipe_write_end, input, LENGTH); //send input to system
 			}
 			else
 				cout << "Switch or system doesn't exists\n";
 		}
 		else if (command == "Send")
 		{
-
+			int sender = tokens[0] , receiver = tokens[1];
+			int s , r;
+			bool sender_exists = false, receiver_exists = false;
+			for(int j=0; j<systems.size(); j++){
+				if(systems[j].number == sender){
+					sender_exists = true;
+					s = j;
+				}
+				if(systems[j].number == receiver){
+					receiver_exists = true;
+					r = j;
+				}
+			}
+			if (sender_exists && receiver_exists)
+			{
+				write(systems[s].main_pipe_write_end, input, LENGTH); //send input to system
+			}
+			else
+				cout << "Sender or Receiver doesn't exists\n";
 		}
 	}
 	return 0;
 }
+
+
+
+// MySwitch 2 1
+// MySystem 1
+// MySystem 2
+// Connect 1 1 0
+// Connect 2 1 1
