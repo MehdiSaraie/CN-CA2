@@ -41,7 +41,7 @@ int main()
 
 		if (command == "MySwitch"){
 			if (tokens.size() != 2){
-				cout << "incomplete arguments\n";
+				cout << "Bad arguments\n";
 				continue;
 			}
 			int number_of_ports = tokens[0], switch_number = tokens[1];
@@ -89,7 +89,7 @@ int main()
         }
         if (command == "MySystem"){
 			if (tokens.size() != 1){
-				cout << "incomplete arguments\n";
+				cout << "Bad arguments\n";
 				continue;
 			}
 			int system_number = tokens[0];
@@ -134,9 +134,11 @@ int main()
             }
         }
 		else if(command == "Connect")
-		{	
-			// int system_number, switch_number, port_number;
-			// line >> system_number >> switch_number >> port_number;
+		{
+			if (tokens.size() != 3){
+				cout << "Bad arguments\n";
+				continue;
+			}
 			int system_number = tokens[0] , switch_number = tokens[1], port_number = tokens[2];
 			int i, j;
 			bool switch_exists = false, system_exists = false;
@@ -154,7 +156,6 @@ int main()
 			}
 			if (switch_exists && system_exists)
 			{
-				cout << "System " << system_number << " connected to switch " << switch_number << " on port " << port_number << endl;
 				write(switches[i].main_pipe_write_end, input, LENGTH); //send input to switch
 				write(systems[j].main_pipe_write_end, input, LENGTH); //send input to system
 			}
@@ -189,8 +190,14 @@ int main()
 
 
 
-// MySwitch 2 1
-// MySystem 1
-// MySystem 2
-// Connect 1 1 0
-// Connect 2 1 1
+/*
+MySwitch 100 1
+
+MySystem 1
+
+MySystem 2
+
+Connect 1 1 0
+Connect 2 1 1
+
+*/

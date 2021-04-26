@@ -23,85 +23,93 @@ int main(int argc, char* argv[]){
 	string switch_number = argv[1];
 	int main_pipe_read_end = atoi(argv[2]);
 	int lookup[1024][2];//dest system + port
+	int lookup_size = 0;
 	int pp[number_of_ports][2];//port + pipe_fd
-	int i, sd, max_sd, activity;
+	int pp_size = 0;
+	int i, j, sd, max_sd, activity;
 	fd_set readfds;
 	char buffer[LENGTH];
 	for (i = 0; i < number_of_ports; i++)
 		pp[i][1] = 0;
 
 	while(true) {
-		// FD_ZERO(&readfds);
+		 FD_ZERO(&readfds);
 
-		// FD_SET(main_pipe_read_end, &readfds);
-		// max_sd = main_pipe_read_end;
-		// for (i = 0; i < number_of_ports; i++){
-		// 	sd = pp[i][1];
-		// 	if (sd > 0)
-		// 		FD_SET(sd, &readfds);
-		// 	if (sd > max_sd)
-		// 		max_sd = sd;
-		// }
-		// activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
-		// if ((activity < 0) && (errno!=EINTR)){
-		// 	cout << ("select error\n");
-		// }
+		 FD_SET(main_pipe_read_end, &readfds);
+		 max_sd = main_pipe_read_end;
+		 for (i = 0; i < number_of_ports; i++){
+		 	sd = pp[i][1];
+		 	if (sd > 0)
+		 		FD_SET(sd, &readfds);
+		 	if (sd > max_sd)
+		 		max_sd = sd;
+		 }
+		 
+		 activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
+		 if ((activity < 0) && (errno!=EINTR)){
+		 	cout << ("select error\n");
+		 }
 
-		// if (FD_ISSET(main_pipe_read_end, &readfds)){ //msg from main
-		// 	memset(&buffer, 0, LENGTH);
-		// 	read(main_pipe_read_end, buffer, LENGTH);
-		// 	istringstream line(buffer);
-		// 	string command;
-		// 	line >> command;
-		// 	int token;
-		// 	vector<int> tokens;
-		// 	line >> command;
-		// 	while(line >> token)
-		// 		tokens.push_back(token);
-		// 	if (command == "Connect"){
-		// 		//add row to lookup
-		// 		cout << "here\n";
-		// 		string port_number = to_string(tokens[2]);
-		// 		const char* myfifo = &(switch_number + "-" + port_number)[0]; //(e.g. 1-40);
-    	// 		mkfifo(myfifo, 0666);
-		// 		// int fd = open(myfifo ,O_RDONLY); //must store fd in pp beside its port
-		// 		// close(fd);
-		// 	}
-		// }
+		 if (FD_ISSET(main_pipe_read_end, &readfds)){ //msg from main
+		 	memset(&buffer, 0, LENGTH);
+		 	read(main_pipe_read_end, buffer, LENGTH);
+		 	istringstream line(buffer);
+		 	string command;
+		 	line >> command;
+		 	int token;
+		 	vector<int> tokens;
+		 	while(line >> token)
+		 		tokens.push_back(token);
+	 		if(command == "Connect"){
+				int system_number = tokens[0];
+			    int port_number = tokens[2];
+				const char* myfifo = &(switch_number + "-" + to_string(port_number))[0];
+				mkfifo(myfifo, 0666);
+				int fd = open(myfifo, O_RDWR);
+				cout << "swi_fd=" << fd << endl;
+				lookup[lookup_size][0] = system_number;
+				lookup[lookup_size][1] = port_number;
+				lookup_size++;
+				pp[pp_size][0] = port_number;
+				pp[pp_size][1] = fd;
+				pp_size++;
+				cout << "System " << system_number << " connected to switch " << switch_number << " on port " << port_number << endl;
+			}
+		 }
 
-		// for (i = 0; i < number_of_ports; i++){ //msg from a system
-		// 	sd = pp[i][1];
-		// 	if (FD_ISSET(sd, &readfds)){
-		// 		//forward frame
-		// 		const char* myfifo = &(switch_number + "-" + to_string(i))[0];
-		// 		cout << myfifo << endl;
-		// 		int fd1 = open(myfifo ,O_RDONLY);
-		// 		memset(&buffer, 0, LENGTH);
-		// 		read(fd1, buffer, LENGTH); 
-		// 		cout << buffer << endl;
-		// 		close(fd1);
-		// 	}
-		// }
-
-		memset(&buffer, 0, LENGTH);
-		read(main_pipe_read_end, buffer, LENGTH);
-		istringstream line(buffer);
-		string command;
-		line >> command;
-		int token;
-		vector<int> tokens;
-		while(line >> token)
-			tokens.push_back(token);
-        if(command == "Connect"){
-            string port_number = to_string(tokens[2]);
-			const char* myfifo = &(switch_number + "-" + port_number)[0]; //(e.g. 1-40);
-			mkfifo(myfifo, 0666);
-			int fd1 = open(myfifo, O_RDONLY); //must store fd in pp beside its port
-			// close(fd1);
-			int fd2 = open(myfifo, O_WRONLY); //must store fd in pp beside its port
-			// close(fd2);
-			cout << fd1 << fd2 << endl;
-		}
+		 for (i = 0; i < number_of_ports; i++){ //msg from a system
+		 	int src_fd = pp[i][1];
+		 	if (FD_ISSET(src_fd, &readfds)){
+		 		memset(&buffer, 0, LENGTH);
+		 		read(src_fd, buffer, LENGTH);
+		 		cout << buffer << endl;
+		 		
+		 		int dest_system = 2; //**must be replaced by frame destination
+		 		int dest_port, dest_fd;
+		 		bool port_found = false;
+		 		for (j = 0; j < lookup_size; j++){ //find port
+		 			if (lookup[j][0] == dest_system){
+		 				dest_port = lookup[j][1];
+		 				port_found = true;
+		 				break;
+		 			}
+		 		}
+		 		if (!port_found){
+		 			cout << "unknown port for destination\n";
+		 			continue;
+		 		}
+		 		for (j = 0; j < pp_size; j++){ //find pipe
+		 			if (pp[j][0] == dest_port){
+		 				dest_fd = pp[j][1];
+		 				break;
+		 			}
+		 		}
+		 		cout << "sending...\n";
+		 		//forward frame through pipe
+		 		
+		 		//close(src_fd);
+		 	}
+		 }
 	}
     return 0;
 }
