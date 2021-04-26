@@ -1,4 +1,3 @@
-#include <sys/stat.h>
 #include <bits/stdc++.h> 
 #include <iostream>
 #include <vector>
@@ -16,6 +15,26 @@
 #define LENGTH 1024
 
 using namespace std;
+
+int find_pipe(int lookup[1024][2], int lookup_size, int pp[][2], int pp_size, int dest_system){
+	int dest_port, dest_fd, j;
+	bool port_found = false;
+	for (j = 0; j < lookup_size; j++){ //find port
+		if (lookup[j][0] == dest_system){
+			dest_port = lookup[j][1];
+			port_found = true;
+			break;
+		}
+	}
+	if (!port_found)
+		return -1;
+	for (j = 0; j < pp_size; j++){ //find pipe
+		if (pp[j][0] == dest_port){
+			dest_fd = pp[j][1];
+			return dest_fd;
+		}
+	}
+}
 
 
 int main(int argc, char* argv[]){
@@ -47,7 +66,7 @@ int main(int argc, char* argv[]){
 		 
 		 activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
 		 if ((activity < 0) && (errno!=EINTR)){
-		 	cout << ("select error\n");
+		 	cerr << ("select error\n");
 		 }
 
 		 if (FD_ISSET(main_pipe_read_end, &readfds)){ //msg from main
@@ -63,7 +82,7 @@ int main(int argc, char* argv[]){
 	 		if(command == "Connect"){
 				int system_number = tokens[0];
 			    int port_number = tokens[2];
-				const char* myfifo = &(switch_number + "-" + to_string(port_number))[0];
+				const char* myfifo = &("pipes/" + switch_number + "-" + to_string(port_number))[0];
 				mkfifo(myfifo, 0666);
 				int fd = open(myfifo, O_RDWR);
 				cout << "swi_fd=" << fd << endl;
@@ -77,40 +96,26 @@ int main(int argc, char* argv[]){
 			}
 		 }
 
-		 for (i = 0; i < number_of_ports; i++){ //msg from a system
-		 	int src_fd = pp[i][1];
-		 	if (FD_ISSET(src_fd, &readfds)){
+		for (i = 0; i < number_of_ports; i++){ //msg from a system
+			int src_fd = pp[i][1];
+			if (FD_ISSET(src_fd, &readfds)){
 		 		memset(&buffer, 0, LENGTH);
+		 		cout << "ok\n";
 		 		read(src_fd, buffer, LENGTH);
 		 		cout << buffer << endl;
 		 		
-		 		int dest_system = 2; //**must be replaced by frame destination
-		 		int dest_port, dest_fd;
-		 		bool port_found = false;
-		 		for (j = 0; j < lookup_size; j++){ //find port
-		 			if (lookup[j][0] == dest_system){
-		 				dest_port = lookup[j][1];
-		 				port_found = true;
-		 				break;
-		 			}
+				int dest_system = 2; //**must be replaced by frame destination
+				int dest_fd = find_pipe(lookup, lookup_size, pp, pp_size, dest_system);
+		 		if (dest_fd < 0){
+		 			cout << "broadcast\n";
+		 			//broadcast
 		 		}
-		 		if (!port_found){
-		 			cout << "unknown port for destination\n";
-		 			continue;
+		 		else{
+		 			cout << "sending...\n";
+		 			//forward frame through pipe
 		 		}
-		 		for (j = 0; j < pp_size; j++){ //find pipe
-		 			if (pp[j][0] == dest_port){
-		 				dest_fd = pp[j][1];
-		 				break;
-		 			}
-		 		}
-		 		cout << "sending...\n";
-		 		//forward frame through pipe
-		 		
-		 		//close(src_fd);
 		 	}
-		 }
+		}
 	}
     return 0;
 }
-
