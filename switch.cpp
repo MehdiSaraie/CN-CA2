@@ -96,6 +96,11 @@ int main(int argc, char* argv[]){
             string port_number = to_string(tokens[2]);
 			const char* myfifo = &(switch_number + "-" + port_number)[0]; //(e.g. 1-40);
 			mkfifo(myfifo, 0666);
+			int fd1 = open(myfifo, O_RDONLY); //must store fd in pp beside its port
+			// close(fd1);
+			int fd2 = open(myfifo, O_WRONLY); //must store fd in pp beside its port
+			// close(fd2);
+			cout << fd1 << fd2 << endl;
 		}
 	}
     return 0;

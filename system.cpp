@@ -38,6 +38,11 @@ int main(int argc, char* argv[]){
             string switch_number = to_string(tokens[1]);
             string port_number = to_string(tokens[2]);
             myfifo = &(switch_number + "-" + port_number)[0];
+            mkfifo(myfifo, 0666);
+            int fd = open(myfifo, O_WRONLY); //must store fd in pp beside its port
+			// close(fd);
+            // fd = open(myfifo, O_RDONLY); //must store fd in pp beside its port
+			// close(fd);
         }
         else if (command == "Send"){
             string sender = to_string(tokens[0]);
