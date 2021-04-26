@@ -74,8 +74,8 @@ int main()
 			int n1 = fork();
             
             if (n1>0){ //parent
-                write(temp_pipe[1], &(to_string(switch_number))[0], LENGTH);
                 write(temp_pipe[1], &(to_string(number_of_ports))[0], LENGTH);
+                write(temp_pipe[1], &(to_string(switch_number))[0], LENGTH);
             }
 
             if (n1 == 0){ //child
@@ -83,8 +83,7 @@ int main()
                 read(temp_pipe[0], inbuf2, LENGTH);
 				puts(inbuf1);
                 char* args[]={"./switch.out", NULL}; 
-                string named_pipe = "aliii";
-                execlp(args[0],&inbuf1[0], &inbuf2[0], &named_pipe[0], &(to_string(main_pipe[0]))[0]); 
+                execlp(args[0],&inbuf1[0], &inbuf2[0], &(to_string(main_pipe[0]))[0]); 
                 exit(0);
             }
         }
@@ -130,11 +129,41 @@ int main()
                 read(temp_pipe[0], inbuf1, LENGTH);
 				puts(inbuf1);
                 char* args[]={"./system.out", NULL}; 
-                string named_pipe = "aliii";
-                execlp(args[0],&inbuf1[0], &named_pipe[0], &(to_string(main_pipe[0]))[0]); 
+                execlp(args[0],&inbuf1[0], &(to_string(main_pipe[0]))[0]); 
                 exit(0);
             }
         }
+		else if(command == "Connect")
+		{	
+			int system_number, switch_number, port_number;
+			line >> system_number >> switch_number >> port_number;
+			int i, j;
+			bool switch_exists = false, system_exists = false;
+			for(i=0; i<switches.size(); i++){
+				if(switches[i].number == switch_number){
+					switch_exists = true;
+					break;
+				}
+			}
+			for(j=0; j<systems.size(); j++){
+				if(systems[j].number == system_number){
+					system_exists = true;
+					break;
+				}
+			}
+			if (switch_exists && system_exists)
+			{
+				cout << "System " << system_number << "connected to switch " << switch_number << "on port " << port_number << endl;
+				write(switches[i].main_pipe_write_end, input, strlen(input)); //send input to switch
+				write(systems[j].main_pipe_write_end, input, strlen(input)); //send input to system
+			}
+			else
+				cout << "Switch or system doesn't exists\n";
+		}
+		else if (command == "Send")
+		{
+
+		}
 	}
 	return 0;
 }
