@@ -18,7 +18,8 @@ switch.o: switch.cpp
 system.o: system.cpp
 	g++ -std=c++11 -c system.cpp -o system.o
 
-.phony: clean
+.PHONY: clean
 clean:
-	rm*.o
-	rm main.out
+	rm *.o
+	rm *.out
+	rm -r pipes

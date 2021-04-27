@@ -1,12 +1,15 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
-#include <string.h>
+#include <vector>
 #include <string>
+#include <string.h>
 #include <unistd.h>
 #include <bits/stdc++.h>
 #include <sys/wait.h>
-#include <vector>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 using namespace std;
 #define LENGTH 1024
@@ -27,6 +30,8 @@ int main()
 {
 	vector<Switch> switches;
 	vector<System> systems;
+	mkdir("pipes", 0777);
+	mkdir("files", 0777);
 	while(true){
 	    string input_str;
 		getline(cin,input_str);
@@ -81,7 +86,6 @@ int main()
             if (n1 == 0){ //child
                 read(temp_pipe[0], inbuf1, LENGTH);
                 read(temp_pipe[0], inbuf2, LENGTH);
-				// puts(inbuf1);
                 char* args[]={"./switch.out", NULL}; 
                 execlp(args[0],&inbuf1[0], &inbuf2[0], &(to_string(main_pipe[0]))[0]); 
                 exit(0);
@@ -127,7 +131,6 @@ int main()
 
             if (n1 == 0){ //child
                 read(temp_pipe[0], inbuf1, LENGTH);
-				// puts(inbuf1);
                 char* args[]={"./system.out", NULL}; 
                 execlp(args[0],&inbuf1[0], &(to_string(main_pipe[0]))[0]); 
                 exit(0);
@@ -156,8 +159,8 @@ int main()
 			}
 			if (switch_exists && system_exists)
 			{
-				write(switches[i].main_pipe_write_end, input, LENGTH); //send input to switch
-				write(systems[j].main_pipe_write_end, input, LENGTH); //send input to system
+				write(switches[i].main_pipe_write_end, input, strlen(input)); //send input to switch
+				write(systems[j].main_pipe_write_end, input, strlen(input)); //send input to system
 			}
 			else
 				cout << "Switch or system doesn't exists\n";
@@ -179,7 +182,7 @@ int main()
 			}
 			if (sender_exists && receiver_exists)
 			{
-				write(systems[s].main_pipe_write_end, input, LENGTH); //send input to system
+				write(systems[s].main_pipe_write_end, input, strlen(input)); //send input to system
 			}
 			else
 				cout << "Sender or Receiver doesn't exists\n";
