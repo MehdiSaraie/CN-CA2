@@ -138,32 +138,60 @@ int main()
         }
 		else if(command == "Connect")
 		{
-			if (tokens.size() != 3){
-				cout << "Bad arguments\n";
-				continue;
-			}
-			int system_number = tokens[0] , switch_number = tokens[1], port_number = tokens[2];
-			int i, j;
-			bool switch_exists = false, system_exists = false;
-			for(i=0; i<switches.size(); i++){
-				if(switches[i].number == switch_number){
-					switch_exists = true;
-					break;
+			if (tokens.size() == 3){ //connect system to switch
+			
+				int system_number = tokens[0] , switch_number = tokens[1], port_number = tokens[2];
+				int i, j;
+				bool switch_exists = false, system_exists = false;
+				for(i=0; i<switches.size(); i++){
+					if(switches[i].number == switch_number){
+						switch_exists = true;
+						break;
+					}
 				}
-			}
-			for(j=0; j<systems.size(); j++){
-				if(systems[j].number == system_number){
-					system_exists = true;
-					break;
+				for(j=0; j<systems.size(); j++){
+					if(systems[j].number == system_number){
+						system_exists = true;
+						break;
+					}
 				}
+				if (switch_exists && system_exists)
+				{
+					write(switches[i].main_pipe_write_end, input, strlen(input)); //send input to switch
+					write(systems[j].main_pipe_write_end, input, strlen(input)); //send input to system
+				}
+				else
+					cout << "Switch or system doesn't exists\n";
 			}
-			if (switch_exists && system_exists)
-			{
-				write(switches[i].main_pipe_write_end, input, strlen(input)); //send input to switch
-				write(systems[j].main_pipe_write_end, input, strlen(input)); //send input to system
+			
+			else if (tokens.size() == 4){ //connect two switches
+				int switch1_number = tokens[0] , switch2_number = tokens[1];
+				int switch1_port = tokens[2], switch2_port = tokens[3];
+				int s, r;
+				bool switch1_exists = false, switch2_exists = false;
+				for(int i=0; i<switches.size(); i++){
+					if(switches[i].number == switch1_number){
+						switch1_exists = true;
+						s = i;
+					}
+					if(switches[i].number == switch2_number){
+						switch2_exists = true;
+						r = i;
+					}
+				}
+
+				if (switch1_exists && switch2_exists)
+				{
+					write(switches[s].main_pipe_write_end, input, strlen(input)); //send input to switch1
+					write(switches[r].main_pipe_write_end, input, strlen(input)); //send input to switch2
+				}
+				else
+					cout << "Switch1 or switch2 doesn't exists\n";
 			}
+			
 			else
-				cout << "Switch or system doesn't exists\n";
+				cout << "Bad arguments\n";
+			
 		}
 		else if (command == "Send")
 		{
@@ -196,11 +224,20 @@ int main()
 /*
 MySwitch 100 1
 
+MySwitch 200 2
+
 MySystem 1
 
 MySystem 2
 
+MySystem 3
+
 Connect 1 1 0
+
+Connect 3 2 0
+
+Connect 1 2 10 20
+
 Connect 2 1 1
 
 */

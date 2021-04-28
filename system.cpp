@@ -11,6 +11,7 @@
 #include <string.h> 
 #include <sys/types.h>
 #include <errno.h>
+#include "functions.h"
 
 #define LENGTH 1024
 
@@ -22,8 +23,9 @@ int main(int argc, char* argv[]){
 	int system_number = atoi(argv[0]);
 	int main_pipe_read_end = atoi(argv[1]);
     char buffer[LENGTH];
-    const char* myfifo;
-    int switch_pipe_fd = 0;
+    const char* myfifo1;
+    const char* myfifo2;
+    int switch_out_fd = 0, switch_in_fd = 0;
     int max_fd, activity;
     fd_set readfds;
 
@@ -32,10 +34,10 @@ int main(int argc, char* argv[]){
 
 		FD_SET(main_pipe_read_end, &readfds);
 		max_fd = main_pipe_read_end;
-		if (switch_pipe_fd > 0)
-			FD_SET(switch_pipe_fd, &readfds);
-		if (switch_pipe_fd > max_fd)
-			max_fd = switch_pipe_fd;
+		if (switch_out_fd > 0)
+			FD_SET(switch_out_fd, &readfds);
+		if (switch_out_fd > max_fd)
+			max_fd = switch_out_fd;
 		 
 		activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
 		if ((activity < 0) && (errno!=EINTR)){
@@ -55,27 +57,30 @@ int main(int argc, char* argv[]){
 		    if(command == "Connect"){
 		        string switch_number = to_string(tokens[1]);
 		        string port_number = to_string(tokens[2]);
-		        myfifo = &("pipes/" + switch_number + "-" + port_number)[0];
-		        mkfifo(myfifo, 0666);
-		        switch_pipe_fd = open(myfifo, O_RDWR);
+				make_pipe(switch_number, port_number, 2, switch_in_fd, switch_out_fd);
 		    }
 		    else if (command == "Send"){
 		        string sender = to_string(tokens[0]);
 		        string receiver = to_string(tokens[1]);
 		        string msg = sender + "-" + receiver + "-" + "MY MSG";
-		        if (switch_pipe_fd == 0){
+		        if (switch_in_fd == 0){
 		        	cout << "System " << sender << " isn't connected to any switch\n";
 		        	continue;
 		        }
-		        write(switch_pipe_fd, &msg[0], strlen(&msg[0]));
+		        write(switch_in_fd, &msg[0], strlen(&msg[0]));
 		    }
 		}
 		
-        if (FD_ISSET(switch_pipe_fd, &readfds)){ //msg from switch
-        	//cout << "OK\n";
+        if (FD_ISSET(switch_out_fd, &readfds)){ //msg from switch
         	memset(&buffer, 0, LENGTH);
-			read(switch_pipe_fd, buffer, LENGTH);
-			cout << buffer << endl;
+			read(switch_out_fd, buffer, LENGTH);
+			int src_system, dest_system;
+			char msg[LENGTH];
+			split_frame(buffer, src_system, dest_system, msg);
+			if (dest_system == system_number)
+				cout << "System " << system_number << " accepted received frame\n" << msg << endl;
+			else
+				cout << "System " << system_number << " discarded received frame" << endl;
         }
     }
 	
