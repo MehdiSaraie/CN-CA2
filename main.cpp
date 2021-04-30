@@ -215,6 +215,9 @@ int main()
 			else
 				cout << "Sender or Receiver doesn't exists\n";
 		}
+		else if(command == "SpanningTree"){
+			write(switches[0].main_pipe_write_end, input, strlen(input));
+		}
 	}
 	return 0;
 }
@@ -270,4 +273,32 @@ Connect 4 1 4
 Connect 5 1 5
 
 Connect 6 1 6
+*/
+
+/*
+MySwitch 5 1
+
+MySwitch 2 2
+
+MySwitch 2 3
+
+MySwitch 2 4
+
+MySwitch 3 5
+
+MySwitch 2 6
+
+MySwitch 2 7
+
+MySwitch 2 8
+
+Connect 1 2 0 0
+*/
+/*
+MySwitch 2 1
+MySwitch 2 2
+MySwitch 2 3
+Connect 1 2 0 0
+Connect 1 3 1 1
+Connect 2 3 1 0
 */

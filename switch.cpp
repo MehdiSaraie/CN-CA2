@@ -9,6 +9,7 @@
 #include "functions.h"
 
 #define LENGTH 1024
+#define SPANNINGTREE 0
 
 using namespace std;
 
@@ -37,35 +38,36 @@ int main(int argc, char* argv[]){
 	int i, j, sd, max_sd, activity;
 	fd_set readfds;
 	char buffer[LENGTH];
+	bool spanConnect = false; //is added to spanning tree?
 
 	while(true) {
-		 FD_ZERO(&readfds);
+		FD_ZERO(&readfds);
 
-		 FD_SET(main_pipe_read_end, &readfds);
-		 max_sd = main_pipe_read_end;
-		 for (i = 0; i < connection_size; i++){
-		 	sd = connection[i][1];
-		 	if (sd > 0)
-		 		FD_SET(sd, &readfds);
-		 	if (sd > max_sd)
-		 		max_sd = sd;
-		 }
-		 
-		 activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
-		 if ((activity < 0) && (errno!=EINTR)){
-		 	cout << ("select error\n");
-		 }
+		FD_SET(main_pipe_read_end, &readfds);
+		max_sd = main_pipe_read_end;
+		for (i = 0; i < connection_size; i++){
+			sd = connection[i][1];
+			if (sd > 0)
+				FD_SET(sd, &readfds);
+			if (sd > max_sd)
+				max_sd = sd;
+		}
+		
+		activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
+		if ((activity < 0) && (errno!=EINTR)){
+			cout << ("select error\n");
+		}
 
-		 if (FD_ISSET(main_pipe_read_end, &readfds)){ //msg from main
-		 	memset(&buffer, 0, LENGTH);
-		 	read(main_pipe_read_end, buffer, LENGTH);
-		 	istringstream line(buffer);
-		 	string command;
-		 	line >> command;
-		 	int token;
-		 	vector<int> tokens;
-		 	while(line >> token)
-		 		tokens.push_back(token);
+		if (FD_ISSET(main_pipe_read_end, &readfds)){ //msg from main
+			memset(&buffer, 0, LENGTH);
+			read(main_pipe_read_end, buffer, LENGTH);
+			istringstream line(buffer);
+			string command;
+			line >> command;
+			int token;
+			vector<int> tokens;
+			while(line >> token)
+				tokens.push_back(token);
 	 		if(command == "Connect"){
 	 			if (tokens.size() == 3){ //connect system to switch
 					int system_number = tokens[0];
@@ -94,61 +96,96 @@ int main(int argc, char* argv[]){
 					}
 				}
 			}
-		 }
+			else if(command == "SpanningTree"){
+				spanConnect = true;
+				string msg = switch_number + "-" + to_string(SPANNINGTREE) + "-0-0";
+				for (int j = 0; j < connection_size; j++){ //broadcast
+					int dest_fd = connection[j][2];
+					write(dest_fd, &msg[0], LENGTH);
+				}
+			}
+		}
 
-		 for (i = 0; i < connection_size; i++){ //msg from a system
-		 	int src_fd = connection[i][1];
-		 	int src_port = connection[i][0];
-		 	if (FD_ISSET(src_fd, &readfds)){
-		 		memset(&buffer, 0, LENGTH);
-		 		int valread = read(src_fd, buffer, LENGTH);
-		 		
-		 		int src_system, dest_system,tag;
-		 		char msg[LENGTH];
-		 		split_frame(buffer, src_system, dest_system, tag, msg);
+		for (i = 0; i < connection_size; i++){ //msg from a system
+			int src_fd = connection[i][1];
+			int src_port = connection[i][0];
+			if (FD_ISSET(src_fd, &readfds)){
+				memset(&buffer, 0, LENGTH);
+				int valread = read(src_fd, buffer, LENGTH);
+				
+				int src_system, dest_system,tag;
+				char msg[LENGTH];
+				split_frame(buffer, src_system, dest_system, tag, msg);
 
-		 		int dest_port, dest_fd;
-		 		bool src_found = false, port_found = false;
-		 		for (j = 0; j < lookup_size; j++){
-		 			if (lookup[j][0] == src_system){ //check if src exists in lookup
-		 				src_found = true;
-		 			}
-		 			if (lookup[j][0] == dest_system){ //check if dest exists in lookup
-		 				dest_port = lookup[j][1];
-		 				port_found = true;
-		 			}
-		 		}
-		 		if (!src_found){ //add src to lookup
-		 			update_lookup(lookup, lookup_size, src_system, src_port);
-		 			cout << "Switch " << switch_number << " updated its lookup:\n";
-		 			cout << "system = " << src_system << ", port = " << src_port << endl;
-		 		}
-		 		if (!port_found){
-		 			cout << "Switch " << switch_number << " broadcasted frame on ports:\n";
+				int dest_port, dest_fd;
+				bool src_found = false, port_found = false;
+				for (j = 0; j < lookup_size; j++){
+					if (lookup[j][0] == src_system){ //check if src exists in lookup
+						src_found = true;
+					}
+					if (lookup[j][0] == dest_system){ //check if dest exists in lookup
+						dest_port = lookup[j][1];
+						port_found = true;
+					}
+				}
+				if (!src_found){ //add src to lookup
+					update_lookup(lookup, lookup_size, src_system, src_port);
+					cout << "Switch " << switch_number << " updated its lookup:\n";
+					cout << "system = " << src_system << ", port = " << src_port << endl;
+				}
+				if (!port_found && dest_system){
+					cout << "Switch " << switch_number << " broadcasted frame on ports:\n";
 					cout << connection_size << endl;
-		 			for (j = 0; j < connection_size; j++){ //broadcast
-			 			if (connection[j][1] != src_fd){
-			 				dest_fd = connection[j][2];
-			 				cout << connection[j][0] << endl;
-			 				write(dest_fd, buffer, valread);
-			 			}
-			 		}
-		 		}
-		 		else{
-		 			for (j = 0; j < connection_size; j++){ //find dest pipe
-			 			if (connection[j][0] == dest_port){
-			 				dest_fd = connection[j][2];
-			 				break;
-			 			}
-			 		}
-			 		cout << "Switch " << switch_number << " sent frame on port " << dest_port << endl;
-			 		write(dest_fd, buffer, valread);
-		 		}
-
-		 	}
-		 }
+					for (j = 0; j < connection_size; j++){ //broadcast
+						if (connection[j][1] != src_fd){
+							dest_fd = connection[j][2];
+							cout << connection[j][0] << endl;
+							write(dest_fd, buffer, valread);
+						}
+					}
+				}
+				else if(port_found && dest_system){
+					for (j = 0; j < connection_size; j++){ //find dest pipe
+						if (connection[j][0] == dest_port){
+							dest_fd = connection[j][2];
+							break;
+						}
+					}
+					cout << "Switch " << switch_number << " sent frame on port " << dest_port << endl;
+					write(dest_fd, buffer, valread);
+				}
+				else if(dest_system == 0){ //spannig tree
+					if(!spanConnect){ //node has not connected to tree
+						spanConnect = true;
+						for (j = 0; j < connection_size; j++){ //broadcast
+							if (connection[j][1] != src_fd){
+								int dest_fd = connection[j][2];
+								string msg = switch_number + "-" + to_string(SPANNINGTREE) + "-0-0";
+								write(dest_fd, &msg[0], LENGTH);
+							}
+						}
+					}
+					else{ //node has connected to tree
+						// int temp;
+						// for (j = 0; j < connection_size; j++){
+						// 	cout <<switch_number << ":" << connection[j][0] << "  " << connection[j][1] << "  " << connection[j][2] << endl;
+						// 	if(connection[j][0] == src_port){
+						// 		temp = connection[j][2];
+						// 		close(connection[j][1]);
+						// 		close(connection[j][2]);
+						// 		rm connection[j][1];
+						// 		rm connection[j][2];
+						// 		break;
+						// 	}
+						// }
+						cout << "Connection " << switch_number << " to " << src_system << " port " << src_port << " " << dest_port << " distroyed!\n";
+						// write(temp, &"HELLO"[0], LENGTH);
+					}
+				}
+			}
+		}
 	}
-    return 0;
+	return 0;
 }
 
 

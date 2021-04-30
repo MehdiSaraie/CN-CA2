@@ -14,7 +14,7 @@
 #include "functions.h"
 
 #define LENGTH 1024
-
+#define SPANNINGTREE 0
 
 using namespace std;
 
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]){
 		        string sender = tokens[0];
 		        string receiver = tokens[1];
 				string file_name = tokens[2];
-				string msg = sender + "-" + receiver + "-" + '0' + "-request-" + file_name;
+				string msg = sender + "-" + receiver + "-0-request-" + file_name;
 				if (switch_in_fd == 0){
 					cout << "System " << sender << " isn't connected to any switch.\n";
 					continue;
@@ -89,25 +89,25 @@ int main(int argc, char* argv[]){
         if (FD_ISSET(switch_out_fd, &readfds)){ //msg from switch
         	memset(&buffer, 0, LENGTH);
 			read(switch_out_fd, buffer, LENGTH);
+			cout << buffer << endl;
 			int src_system, dest_system, tag;
 			char msg[LENGTH];
 			split_frame(buffer, src_system, dest_system, tag, msg);
 			if (dest_system == system_number){
 				char *output = NULL;
 				output = strstr(msg,"request-");
-				if(!output){
+				if(!output){    //msg from switch
 					cout << "System " << system_number << " accepted received frame.\n" << endl;
-					// cout << "#"<< tag << endl;
 					WriteInFile("files/"+to_string(system_number)+"IN", msg);
 				}
-				else{
+				else{ //msg for request a file
 					cout << "System " << system_number << " accepted request.\n" << endl;
 					int j = 0;
 					while (msg[j] != '-')
 						j++;
 					char file_name[LENGTH];
 					strcpy(file_name, msg+j+1);
-					vector<string> chunks = read_file_chunk(file_name);  //send msg to switch
+					vector<string> chunks = read_file_chunk(file_name);  //send requested file to switch
 					for(int h=0; h<chunks.size(); h++){
 						string msg = to_string(system_number) + "-" + to_string(src_system) + "-" + to_string(h) + "-" + chunks[h];
 						if (switch_in_fd == 0){
@@ -118,6 +118,18 @@ int main(int argc, char* argv[]){
 					}
 				}
 			}
+			// else if(dest_system == SPANNINGTREE){ //for SpanningTree
+			// 	if(tag < system_number){
+			// 		root = tag;
+			// 		distance = atoi(msg) + 1;
+			// 		string msg = to_string(system_number) + "-" + to_string(SPANNINGTREE) + "-" + to_string(root) + "-" + to_string(distance);
+			// 		if (switch_in_fd == 0){
+			// 			cout << "System " << system_number << " isn't connected to any switch.\n";
+			// 			continue;
+			// 		}
+			// 		write(switch_in_fd, &msg[0], LENGTH);
+			// 	}
+			// }
 			else
 				cout << "System " << system_number << " discarded received frame\n" << endl;
         }

@@ -15,15 +15,16 @@ void split_frame(char buffer[LENGTH], int& src_system, int& dest_system, int& ta
 	strncpy(dest_system_str, buffer+j+1, k-(j+1));
 	dest_system = atoi(dest_system_str);
 	
-	int l = k+j+1;
+	int l = k+1;
 	while (buffer[l] != '-')
 		l++;
 	char tag_str[LENGTH];
-	strncpy(tag_str, buffer+k+j+1, l-(k+j));
-	int tagg = atoi(tag_str);
+	strncpy(tag_str, buffer+k+1, l-(k+1));
+	tag = atoi(tag_str);
 
+	// cout << buffer << endl;
 	// cout << j << k << l << endl;
-	// cout << buffer  << "$"<<tagg << endl;
+	// cout << buffer  << "$"<<tag << endl;
 	strcpy(msg, buffer+l+1);
 }
 
