@@ -193,7 +193,7 @@ int main()
 				cout << "Bad arguments\n";
 			
 		}
-		else if (command == "Send")
+		else if (command == "Send" || command == "Receive")
 		{
 			int sender = tokens[0] , receiver = tokens[1];
 			int s , r;
@@ -240,4 +240,34 @@ Connect 1 2 10 20
 
 Connect 2 1 1
 
+*/
+
+/*
+MySwitch 7 1
+
+MySystem 1
+
+MySystem 2
+
+Connect 1 1 1
+
+Connect 2 1 2
+
+MySystem 3
+
+MySystem 4
+
+MySystem 5
+
+MySystem 6
+
+
+
+Connect 3 1 3
+
+Connect 4 1 4
+
+Connect 5 1 5
+
+Connect 6 1 6
 */

@@ -1,15 +1,9 @@
 #include <sys/stat.h>
 #include <bits/stdc++.h> 
-#include <iostream>
-#include <vector>
-#include <string>
 #include <fstream>
-#include <fcntl.h> 
-#include <sys/stat.h> 
 #include <unistd.h>
 #include <cstring>
 #include <stdio.h>
-#include <string.h> 
 #include <sys/types.h>
 #include <errno.h>
 #include "functions.h"
@@ -109,9 +103,9 @@ int main(int argc, char* argv[]){
 		 		memset(&buffer, 0, LENGTH);
 		 		int valread = read(src_fd, buffer, LENGTH);
 		 		
-		 		int src_system, dest_system;
+		 		int src_system, dest_system,tag;
 		 		char msg[LENGTH];
-		 		split_frame(buffer, src_system, dest_system, msg);
+		 		split_frame(buffer, src_system, dest_system, tag, msg);
 
 		 		int dest_port, dest_fd;
 		 		bool src_found = false, port_found = false;
@@ -131,6 +125,7 @@ int main(int argc, char* argv[]){
 		 		}
 		 		if (!port_found){
 		 			cout << "Switch " << switch_number << " broadcasted frame on ports:\n";
+					cout << connection_size << endl;
 		 			for (j = 0; j < connection_size; j++){ //broadcast
 			 			if (connection[j][1] != src_fd){
 			 				dest_fd = connection[j][2];

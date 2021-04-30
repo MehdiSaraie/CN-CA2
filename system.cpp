@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
     int max_fd, activity;
     fd_set readfds;
 
-	while(true) {
+	while(true){
 		FD_ZERO(&readfds);
 
 		FD_SET(main_pipe_read_end, &readfds);
@@ -50,39 +50,77 @@ int main(int argc, char* argv[]){
 		    istringstream line(buffer);
 			string command;
 			line >> command;
-			int token;
-			vector<int> tokens;
+			string token;
+			vector<string> tokens;
 			while(line >> token)
 				tokens.push_back(token);
 		    if(command == "Connect"){
-		        string switch_number = to_string(tokens[1]);
-		        string port_number = to_string(tokens[2]);
+		        string switch_number = tokens[1];
+		        string port_number = tokens[2];
 				make_pipe(switch_number, port_number, 2, switch_in_fd, switch_out_fd);
 		    }
 		    else if (command == "Send"){
-		        string sender = to_string(tokens[0]);
-		        string receiver = to_string(tokens[1]);
-		        string msg = sender + "-" + receiver + "-" + "MY MSG";
-		        if (switch_in_fd == 0){
-		        	cout << "System " << sender << " isn't connected to any switch\n";
-		        	continue;
-		        }
-		        write(switch_in_fd, &msg[0], strlen(&msg[0]));
+				string sender = tokens[0];
+				string receiver = tokens[1];
+				string file_name = tokens[2];
+				vector<string> chunks = read_file_chunk(file_name);
+				for(int h=0; h<chunks.size(); h++){
+					string msg = sender + "-" + receiver + "-" + to_string(h) + "-" + chunks[h];
+					if (switch_in_fd == 0){
+						cout << "System " << sender << " isn't connected to any switch\n";
+						continue;
+					}
+					write(switch_in_fd, &msg[0], LENGTH);
+				}
+		    }
+			else if (command == "Receive"){
+		        string sender = tokens[0];
+		        string receiver = tokens[1];
+				string file_name = tokens[2];
+				string msg = sender + "-" + receiver + "-" + '0' + "-request-" + file_name;
+				if (switch_in_fd == 0){
+					cout << "System " << sender << " isn't connected to any switch.\n";
+					continue;
+				}
+				write(switch_in_fd, &msg[0], LENGTH);
 		    }
 		}
 		
         if (FD_ISSET(switch_out_fd, &readfds)){ //msg from switch
         	memset(&buffer, 0, LENGTH);
 			read(switch_out_fd, buffer, LENGTH);
-			int src_system, dest_system;
+			int src_system, dest_system, tag;
 			char msg[LENGTH];
-			split_frame(buffer, src_system, dest_system, msg);
-			if (dest_system == system_number)
-				cout << "System " << system_number << " accepted received frame\n" << msg << endl;
+			split_frame(buffer, src_system, dest_system, tag, msg);
+			if (dest_system == system_number){
+				char *output = NULL;
+				output = strstr(msg,"request-");
+				if(!output){
+					cout << "System " << system_number << " accepted received frame.\n" << endl;
+					// cout << "#"<< tag << endl;
+					WriteInFile("files/"+to_string(system_number)+"IN", msg);
+				}
+				else{
+					cout << "System " << system_number << " accepted request.\n" << endl;
+					int j = 0;
+					while (msg[j] != '-')
+						j++;
+					char file_name[LENGTH];
+					strcpy(file_name, msg+j+1);
+					vector<string> chunks = read_file_chunk(file_name);  //send msg to switch
+					for(int h=0; h<chunks.size(); h++){
+						string msg = to_string(system_number) + "-" + to_string(src_system) + "-" + to_string(h) + "-" + chunks[h];
+						if (switch_in_fd == 0){
+							cout << "System " << system_number << " isn't connected to any switch.\n";
+							continue;
+						}
+						write(switch_in_fd, &msg[0], LENGTH);
+					}
+				}
+			}
 			else
-				cout << "System " << system_number << " discarded received frame" << endl;
+				cout << "System " << system_number << " discarded received frame\n" << endl;
         }
     }
-	
     return 0;
 }
