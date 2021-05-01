@@ -22,9 +22,6 @@ void split_frame(char buffer[LENGTH], int& src_system, int& dest_system, int& ta
 	strncpy(tag_str, buffer+k+1, l-(k+1));
 	tag = atoi(tag_str);
 
-	// cout << buffer << endl;
-	// cout << j << k << l << endl;
-	// cout << buffer  << "$"<<tag << endl;
 	strcpy(msg, buffer+l+1);
 }
 

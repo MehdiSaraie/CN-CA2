@@ -89,7 +89,6 @@ int main(int argc, char* argv[]){
         if (FD_ISSET(switch_out_fd, &readfds)){ //msg from switch
         	memset(&buffer, 0, LENGTH);
 			read(switch_out_fd, buffer, LENGTH);
-			cout << buffer << endl;
 			int src_system, dest_system, tag;
 			char msg[LENGTH];
 			split_frame(buffer, src_system, dest_system, tag, msg);
@@ -118,18 +117,6 @@ int main(int argc, char* argv[]){
 					}
 				}
 			}
-			// else if(dest_system == SPANNINGTREE){ //for SpanningTree
-			// 	if(tag < system_number){
-			// 		root = tag;
-			// 		distance = atoi(msg) + 1;
-			// 		string msg = to_string(system_number) + "-" + to_string(SPANNINGTREE) + "-" + to_string(root) + "-" + to_string(distance);
-			// 		if (switch_in_fd == 0){
-			// 			cout << "System " << system_number << " isn't connected to any switch.\n";
-			// 			continue;
-			// 		}
-			// 		write(switch_in_fd, &msg[0], LENGTH);
-			// 	}
-			// }
 			else
 				cout << "System " << system_number << " discarded received frame\n" << endl;
         }

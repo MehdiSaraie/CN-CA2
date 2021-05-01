@@ -295,9 +295,9 @@ MySwitch 2 8
 Connect 1 2 0 0
 */
 /*
-MySwitch 2 1
-MySwitch 2 2
-MySwitch 2 3
+MySwitch 3 1
+MySwitch 3 2
+MySwitch 3 3
 Connect 1 2 0 0
 Connect 1 3 1 1
 Connect 2 3 1 0

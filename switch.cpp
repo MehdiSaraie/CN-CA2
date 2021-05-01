@@ -166,20 +166,16 @@ int main(int argc, char* argv[]){
 						}
 					}
 					else{ //node has connected to tree
-						// int temp;
-						// for (j = 0; j < connection_size; j++){
-						// 	cout <<switch_number << ":" << connection[j][0] << "  " << connection[j][1] << "  " << connection[j][2] << endl;
-						// 	if(connection[j][0] == src_port){
-						// 		temp = connection[j][2];
-						// 		close(connection[j][1]);
-						// 		close(connection[j][2]);
-						// 		rm connection[j][1];
-						// 		rm connection[j][2];
-						// 		break;
-						// 	}
-						// }
+						int temp;
+						for (j = 0; j < connection_size; j++){
+							if(connection[j][0] == src_port){
+								connection[j][0] = NULL;
+								connection[j][1] = NULL;
+								connection[j][2] = NULL;
+								break;
+							}
+						}
 						cout << "Connection " << switch_number << " to " << src_system << " port " << src_port << " " << dest_port << " distroyed!\n";
-						// write(temp, &"HELLO"[0], LENGTH);
 					}
 				}
 			}
