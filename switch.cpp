@@ -74,7 +74,7 @@ int main(int argc, char* argv[]){
 					int port_number = tokens[2];	
 					int in_fd, out_fd;
 					make_pipe(switch_number, to_string(port_number), 1, in_fd, out_fd);
-					update_lookup(lookup, lookup_size, system_number, port_number);
+					// update_lookup(lookup, lookup_size, system_number, port_number);
 					add_connection(connection, connection_size, port_number, in_fd, out_fd);
 					cout << "System " << system_number << " connected to switch " << switch_number << " on port " << port_number << endl;
 				}
@@ -113,9 +113,9 @@ int main(int argc, char* argv[]){
 				memset(&buffer, 0, LENGTH);
 				int valread = read(src_fd, buffer, LENGTH);
 				
-				int src_system, dest_system,tag;
+				int src_system, dest_system,label;
 				char msg[LENGTH];
-				split_frame(buffer, src_system, dest_system, tag, msg);
+				split_frame(buffer, src_system, dest_system, label, msg);
 
 				int dest_port, dest_fd;
 				bool src_found = false, port_found = false;
@@ -133,11 +133,15 @@ int main(int argc, char* argv[]){
 					cout << "Switch " << switch_number << " updated its lookup:\n";
 					cout << "system = " << src_system << ", port = " << src_port << endl;
 				}
+				for (j = 0; j < connection_size; j++){
+					if (connection[j][1] != src_fd )
+						port_found = false;
+				}
 				if (!port_found && dest_system){
 					cout << "Switch " << switch_number << " broadcasted frame on ports:\n";
-					cout << connection_size << endl;
+					// cout << connection_size << endl;
 					for (j = 0; j < connection_size; j++){ //broadcast
-						if (connection[j][1] != src_fd){
+						if (connection[j][1] != src_fd && connection[j][0]!= -1){
 							dest_fd = connection[j][2];
 							cout << connection[j][0] << endl;
 							write(dest_fd, buffer, valread);
@@ -158,7 +162,7 @@ int main(int argc, char* argv[]){
 					if(!spanConnect){ //node has not connected to tree
 						spanConnect = true;
 						for (j = 0; j < connection_size; j++){ //broadcast
-							if (connection[j][1] != src_fd){
+							if (connection[j][1] != src_fd && connection[j][0]!= -1){
 								int dest_fd = connection[j][2];
 								string msg = switch_number + "-" + to_string(SPANNINGTREE) + "-0-0";
 								write(dest_fd, &msg[0], LENGTH);
@@ -169,9 +173,10 @@ int main(int argc, char* argv[]){
 						int temp;
 						for (j = 0; j < connection_size; j++){
 							if(connection[j][0] == src_port){
-								connection[j][0] = NULL;
-								connection[j][1] = NULL;
-								connection[j][2] = NULL;
+								connection[j][0] = -1;
+								connection[j][1] = -1;
+								connection[j][2] = -1;
+								// connection_size--;
 								break;
 							}
 						}

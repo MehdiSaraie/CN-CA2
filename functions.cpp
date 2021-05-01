@@ -1,6 +1,6 @@
 #include "functions.h"
 
-void split_frame(char buffer[LENGTH], int& src_system, int& dest_system, int& tag, char msg[LENGTH]){
+void split_frame(char buffer[LENGTH], int& src_system, int& dest_system, int& label, char msg[LENGTH]){
 	int j = 0;
 	while (buffer[j] != '-')
 		j++;
@@ -18,9 +18,9 @@ void split_frame(char buffer[LENGTH], int& src_system, int& dest_system, int& ta
 	int l = k+1;
 	while (buffer[l] != '-')
 		l++;
-	char tag_str[LENGTH];
-	strncpy(tag_str, buffer+k+1, l-(k+1));
-	tag = atoi(tag_str);
+	char label_str[LENGTH];
+	strncpy(label_str, buffer+k+1, l-(k+1));
+	label = atoi(label_str);
 
 	strcpy(msg, buffer+l+1);
 }

@@ -89,15 +89,16 @@ int main(int argc, char* argv[]){
         if (FD_ISSET(switch_out_fd, &readfds)){ //msg from switch
         	memset(&buffer, 0, LENGTH);
 			read(switch_out_fd, buffer, LENGTH);
-			int src_system, dest_system, tag;
+			int src_system, dest_system, label;
 			char msg[LENGTH];
-			split_frame(buffer, src_system, dest_system, tag, msg);
+			split_frame(buffer, src_system, dest_system, label, msg);
 			if (dest_system == system_number){
 				char *output = NULL;
 				output = strstr(msg,"request-");
 				if(!output){    //msg from switch
+					cout << "label : " << label << endl;
 					cout << "System " << system_number << " accepted received frame.\n" << endl;
-					WriteInFile("files/"+to_string(system_number)+"IN", msg);
+					WriteInFile("files/#"+to_string(system_number) + "<-" + to_string(src_system), msg);
 				}
 				else{ //msg for request a file
 					cout << "System " << system_number << " accepted request.\n" << endl;
