@@ -170,7 +170,6 @@ int main(int argc, char* argv[]){
 						}
 					}
 					else{ //node has connected to tree
-						int temp;
 						for (j = 0; j < connection_size; j++){
 							if(connection[j][0] == src_port){
 								connection[j][0] = -1;

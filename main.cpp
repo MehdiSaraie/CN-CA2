@@ -218,6 +218,8 @@ int main()
 		else if(command == "SpanningTree"){
 			write(switches[0].main_pipe_write_end, input, strlen(input));
 		}
+		else 
+			cout << "Bad arguments\n";
 	}
 	return 0;
 }

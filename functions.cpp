@@ -41,13 +41,21 @@ void make_pipe(string switch_number, string port_number, int flag, int& in_fd, i
 }
 
 
-vector<string> read_file_chunk(string file_name){
+vector<string> read_file_chunk(string file_name, string status){
 
 	const int BUFFER_SIZE = 512;
 	vector<char> buffer (BUFFER_SIZE + 1, 0);
 
 	ifstream ifile(file_name, std::ifstream::binary);
 	vector<string> chunks;
+	if (ifile.fail()){
+		cout << "No such file.\n";
+		if (status == "request"){
+			chunks.push_back("No such file.\n");
+		}
+		return chunks;
+	}
+	
 	while(1)
 	{
 		ifile.read(buffer.data(), BUFFER_SIZE);
@@ -64,6 +72,7 @@ void WriteInFile(string filename, string msg){
 	ofstream outfile;
 	outfile.open(filename, ios::app);
 	outfile << msg;
+	outfile << "_____________________________________________\n";
 	outfile.close();
 
 	// ostream out(filename, ofstream::binary);

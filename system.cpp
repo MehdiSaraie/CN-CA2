@@ -63,7 +63,7 @@ int main(int argc, char* argv[]){
 				string sender = tokens[0];
 				string receiver = tokens[1];
 				string file_name = tokens[2];
-				vector<string> chunks = read_file_chunk(file_name);
+				vector<string> chunks = read_file_chunk(file_name, "send");
 				for(int h=0; h<chunks.size(); h++){
 					string msg = sender + "-" + receiver + "-" + to_string(h) + "-" + chunks[h];
 					if (switch_in_fd == 0){
@@ -107,7 +107,7 @@ int main(int argc, char* argv[]){
 						j++;
 					char file_name[LENGTH];
 					strcpy(file_name, msg+j+1);
-					vector<string> chunks = read_file_chunk(file_name);  //send requested file to switch
+					vector<string> chunks = read_file_chunk(file_name, "request");  //send requested file to switch
 					for(int h=0; h<chunks.size(); h++){
 						string msg = to_string(system_number) + "-" + to_string(src_system) + "-" + to_string(h) + "-" + chunks[h];
 						if (switch_in_fd == 0){
