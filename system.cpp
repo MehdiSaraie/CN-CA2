@@ -28,6 +28,7 @@ int main(int argc, char* argv[]){
     int switch_out_fd = 0, switch_in_fd = 0;
     int max_fd, activity;
     fd_set readfds;
+	unordered_map<pair<int,int>, string, hash_pair> messages;
 
 	while(true){
 		FD_ZERO(&readfds);
@@ -96,9 +97,11 @@ int main(int argc, char* argv[]){
 				char *output = NULL;
 				output = strstr(msg,"request-");
 				if(!output){    //msg from switch
-					cout << "label : " << label << endl;
 					cout << "System " << system_number << " accepted received frame.\n" << endl;
-					WriteInFile("files/#"+to_string(system_number) + "<-" + to_string(src_system), msg);
+					pair<int, int> temp(src_system, label);
+					messages[temp] = msg;
+					WriteInFile(system_number, src_system, messages);
+					messages.clear();
 				}
 				else{ //msg for request a file
 					cout << "System " << system_number << " accepted request.\n" << endl;

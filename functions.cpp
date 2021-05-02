@@ -68,14 +68,14 @@ vector<string> read_file_chunk(string file_name, string status){
 	return chunks;
 }
 
-void WriteInFile(string filename, string msg){
+void WriteInFile(int system_number, int src_system, unordered_map<pair<int,int>, string, hash_pair> messages){
+	string filename = "files/#"+to_string(system_number) + "<-" + to_string(src_system);
 	ofstream outfile;
 	outfile.open(filename, ios::app);
-	outfile << msg;
-	outfile << "_____________________________________________\n";
+	for(auto p : messages){
+		if((p.first).first == src_system){
+			outfile << p.second;
+		}
+	}
 	outfile.close();
-
-	// ostream out(filename, ofstream::binary);
-	// out.write(msg.c_str(),msg.size());
-	// out.close();
 }

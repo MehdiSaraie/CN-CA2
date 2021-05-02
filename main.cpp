@@ -91,7 +91,7 @@ int main()
                 exit(0);
             }
         }
-        if (command == "MySystem"){
+        else if (command == "MySystem"){
 			if (tokens.size() != 1){
 				cout << "Bad arguments\n";
 				continue;
