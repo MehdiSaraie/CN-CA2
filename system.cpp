@@ -90,6 +90,11 @@ int main(int argc, char* argv[]){
         if (FD_ISSET(switch_out_fd, &readfds)){ //msg from switch
         	memset(&buffer, 0, LENGTH);
 			read(switch_out_fd, buffer, LENGTH);
+			if (strcmp(buffer, "connect error") == 0){
+				switch_out_fd = 0;
+				switch_in_fd = 0;
+				continue;
+			}
 			int src_system, dest_system, label;
 			char msg[LENGTH];
 			split_frame(buffer, src_system, dest_system, label, msg);

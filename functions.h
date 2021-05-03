@@ -23,6 +23,8 @@ struct hash_pair {
     }
 };
 
+void update_lookup(int lookup[][2], int& lookup_size, int system_number, int port_number);
+void add_connection(int connection[][3], int& connection_size, int port_number, int read_fd, int write_fd);
 void split_frame(char buffer[LENGTH], int& src_system, int& dest_system, int& label, char msg[LENGTH]);
 void make_pipe(string switch_number, string port_number, int flag, int& in_fd, int& out_fd);
 vector<string> read_file_chunk(string file_name, string status);

@@ -1,5 +1,18 @@
 #include "functions.h"
 
+void update_lookup(int lookup[][2], int& lookup_size, int system_number, int port_number){
+	lookup[lookup_size][0] = system_number;
+	lookup[lookup_size][1] = port_number;
+	lookup_size++;
+}
+
+void add_connection(int connection[][3], int& connection_size, int port_number, int read_fd, int write_fd){
+	connection[connection_size][0] = port_number;
+	connection[connection_size][1] = read_fd;
+	connection[connection_size][2] = write_fd;
+	connection_size++;
+}
+
 void split_frame(char buffer[LENGTH], int& src_system, int& dest_system, int& label, char msg[LENGTH]){
 	int j = 0;
 	while (buffer[j] != '-')

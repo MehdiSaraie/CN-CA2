@@ -13,19 +13,6 @@
 
 using namespace std;
 
-void update_lookup(int lookup[][2], int& lookup_size, int system_number, int port_number){
-	lookup[lookup_size][0] = system_number;
-	lookup[lookup_size][1] = port_number;
-	lookup_size++;
-}
-
-void add_connection(int connection[][3], int& connection_size, int port_number, int read_fd, int write_fd){
-	connection[connection_size][0] = port_number;
-	connection[connection_size][1] = read_fd;
-	connection[connection_size][2] = write_fd;
-	connection_size++;
-}
-
 
 int main(int argc, char* argv[]){
 	const int number_of_ports = atoi(argv[0]);
@@ -74,10 +61,29 @@ int main(int argc, char* argv[]){
 					int port_number = tokens[2];	
 					int in_fd, out_fd;
 					make_pipe(switch_number, to_string(port_number), 1, in_fd, out_fd);
-					// update_lookup(lookup, lookup_size, system_number, port_number);
-					add_connection(connection, connection_size, port_number, in_fd, out_fd);
-					cout << "System " << system_number << " connected to switch " << switch_number << " on port " << port_number << endl;
+					
+					bool flag = true;	
+					if (connection_size == number_of_ports){
+						cout << "All ports in use. please connect to other switch\n";
+						flag = false;
+					}	
+					else{	
+						for (j = 0; j < connection_size; j++){
+							if (connection[j][0] == port_number){
+								cout << "Port " << port_number << " in use\n";
+								flag = false;
+								break;
+							}
+						}
+					}					
+					if (flag){	
+						add_connection(connection, connection_size, port_number, in_fd, out_fd);
+						cout << "System " << system_number << " connected to switch " << switch_number << " on port " << port_number << endl;
+					}
+					else
+						write(out_fd, &"connect error"[0], strlen(&"connect error"[0]));
 				}
+				
 				else if(tokens.size() == 4){ //connect two switches
 					string switch1_number = to_string(tokens[0]) , switch2_number = to_string(tokens[1]);
 					int switch1_port = tokens[2], switch2_port = tokens[3];

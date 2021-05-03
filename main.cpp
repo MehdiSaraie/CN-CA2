@@ -38,8 +38,8 @@ int main()
 		char* input = &input_str[0];
 		istringstream line(input);
 		string command;
-		int token;
-		vector<int> tokens;
+		string token;
+		vector<string> tokens;
 		line >> command;
 		while(line >> token)
 			tokens.push_back(token);
@@ -49,7 +49,7 @@ int main()
 				cout << "Bad arguments\n";
 				continue;
 			}
-			int number_of_ports = tokens[0], switch_number = tokens[1];
+			int number_of_ports = stoi(tokens[0]), switch_number = stoi(tokens[1]);
 			int switch_exists = false;
 			for(int i=0;i<switches.size();i++)
 			{
@@ -86,8 +86,7 @@ int main()
             if (n1 == 0){ //child
                 read(temp_pipe[0], inbuf1, LENGTH);
                 read(temp_pipe[0], inbuf2, LENGTH);
-                char* args[]={"./switch.out", NULL}; 
-                execlp(args[0],&inbuf1[0], &inbuf2[0], &(to_string(main_pipe[0]))[0]); 
+                execlp("./switch.out", &inbuf1[0], &inbuf2[0], &(to_string(main_pipe[0]))[0], NULL); 
                 exit(0);
             }
         }
@@ -96,7 +95,7 @@ int main()
 				cout << "Bad arguments\n";
 				continue;
 			}
-			int system_number = tokens[0];
+			int system_number = stoi(tokens[0]);
 			int system_exists = false;
 			for(int i=0;i<systems.size();i++)
 			{
@@ -131,8 +130,7 @@ int main()
 
             if (n1 == 0){ //child
                 read(temp_pipe[0], inbuf1, LENGTH);
-                char* args[]={"./system.out", NULL}; 
-                execlp(args[0],&inbuf1[0], &(to_string(main_pipe[0]))[0]); 
+                execlp("./system.out", &inbuf1[0], &(to_string(main_pipe[0]))[0], NULL); 
                 exit(0);
             }
         }
@@ -140,7 +138,7 @@ int main()
 		{
 			if (tokens.size() == 3){ //connect system to switch
 			
-				int system_number = tokens[0] , switch_number = tokens[1], port_number = tokens[2];
+				int system_number = stoi(tokens[0]) , switch_number = stoi(tokens[1]), port_number = stoi(tokens[2]);
 				int i, j;
 				bool switch_exists = false, system_exists = false;
 				for(i=0; i<switches.size(); i++){
@@ -165,8 +163,8 @@ int main()
 			}
 			
 			else if (tokens.size() == 4){ //connect two switches
-				int switch1_number = tokens[0] , switch2_number = tokens[1];
-				int switch1_port = tokens[2], switch2_port = tokens[3];
+				int switch1_number = stoi(tokens[0]) , switch2_number = stoi(tokens[1]);
+				int switch1_port = stoi(tokens[2]), switch2_port = stoi(tokens[3]);
 				int s, r;
 				bool switch1_exists = false, switch2_exists = false;
 				for(int i=0; i<switches.size(); i++){
@@ -195,31 +193,35 @@ int main()
 		}
 		else if (command == "Send" || command == "Receive")
 		{
-			int sender = tokens[0] , receiver = tokens[1];
-			int s , r;
-			bool sender_exists = false, receiver_exists = false;
-			for(int j=0; j<systems.size(); j++){
-				if(systems[j].number == sender){
-					sender_exists = true;
-					s = j;
+			if (tokens.size() == 3){
+				int sender = stoi(tokens[0]), receiver = stoi(tokens[1]);
+				int s , r;
+				bool sender_exists = false, receiver_exists = false;
+				for(int j=0; j<systems.size(); j++){
+					if(systems[j].number == sender){
+						sender_exists = true;
+						s = j;
+					}
+					if(systems[j].number == receiver){
+						receiver_exists = true;
+						r = j;
+					}
 				}
-				if(systems[j].number == receiver){
-					receiver_exists = true;
-					r = j;
+				if (sender_exists && receiver_exists)
+				{
+					write(systems[s].main_pipe_write_end, input, strlen(input)); //send input to system
 				}
-			}
-			if (sender_exists && receiver_exists)
-			{
-				write(systems[s].main_pipe_write_end, input, strlen(input)); //send input to system
+				else
+					cout << "Sender or Receiver doesn't exists\n";
 			}
 			else
-				cout << "Sender or Receiver doesn't exists\n";
+				cout << "Bad arguments\n";
 		}
 		else if(command == "SpanningTree"){
 			write(switches[0].main_pipe_write_end, input, strlen(input));
 		}
 		else 
-			cout << "Bad arguments\n";
+			cout << "Bad command\n";
 	}
 	return 0;
 }
@@ -296,6 +298,7 @@ MySwitch 2 8
 
 Connect 1 2 0 0
 */
+
 /*
 MySwitch 3 1
 MySwitch 3 2
