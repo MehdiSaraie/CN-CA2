@@ -40,7 +40,7 @@ Connect 4 4 4
 Connect 5 5 5
 Connect 6 6 6
 Send 1 4 files/q
-Send 2 6 files/a.txt
+Send 3 1 files/a.txt
 */
 
 /* step 5 (with loop)
@@ -70,5 +70,5 @@ Connect 5 5 5
 Connect 6 6 6
 SpanningTree
 Send 1 4 files/q
-Send 2 6 files/a.txt
+Send 3 1 files/a.txt
 */
